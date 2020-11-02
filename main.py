@@ -2,7 +2,7 @@
 # Calgary, AB
 
 ######################################################################
-###################### AI LEANRS TO GAME #############################
+###################### AI LEARNS TO GAME #############################
 ######################################################################
 
 # The following game and AI implementation was created as a way to
@@ -25,6 +25,39 @@ BIRD_IMGS = [pygame.transform.scale2x(pygame.image.load(os.path.join("bird1.png"
 PIPE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("pipe.png")))
 BASE_IMG = pygame.transform.scale2x(pygame.image.load("base.png"))
 BG_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("bg.png")))
+
+
+# Pipe class that represents the obstacles that the object will go by
+class Pipe:
+    GAP = 200
+    VEL = 5
+
+    # Initialize the Pipe object
+    def __init__(self,x):
+        self.x = x
+        self.height = 0
+        self.top = 0
+        self.bottom = 0
+        self.PIPE_TOP = pygame.transform.flip(PIPE_IMG, False, True)
+        self.PIPE_BOTTOM = PIPE_IMG
+        self.passed = False
+        self.set_height()
+
+    # Sets height of Pipe at random
+    def set_height(self):
+        self.height = random.randrange(20 , 420)
+        self.top = self.height - self.PIPE_TOP.get_height()
+        self.bottom = self.height + self.GAP
+
+    def move(self):
+        self.x -= self.VEL
+
+    def draw(self,win):
+        win.blit(self.PIPE_TOP,(self.x, self.top))
+        win.blit(self.PIPE_BOTTOM,(self.x, self.bottom))
+
+    
+
 
 
 ## bird class for the bird object
@@ -99,6 +132,7 @@ class Bird:
         new_rect = rotated_image.get_rect(center=self.img.get_rect(topleft=(self.x, self.y)).center)
         win.blit(rotated_image, new_rect.topleft)
 
+    # Two dimensional list of the location of pixels of each image
     def get_mask(self):
         return pygame.mask.from_surface(self.img)
 
