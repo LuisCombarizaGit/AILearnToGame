@@ -1,15 +1,23 @@
 # Luis Combariza  - November 2 / 2020
 # Calgary, AB
+# luis_combariza@outlook.com
+# luis Combariza @ linkedIn.com
 
 ######################################################################
 ###################### AI LEARNS TO GAME #############################
 ######################################################################
 
-# The following game and AI implementation was created as a way to
+# The following game and AI implementation are created as a way to
 # to look into the possibilities that a simple neuro network has on
 # something so difficult to a human player yet so simple to an algorithm
 
+# GAME STORY : You have landed on strange sandy planet with landscape much like our own
+# country of Egypt. You are running out of fuel and to survive you must
+# not crash as you make through the terrain. You set set up the autopilot(AI)
+# in hope that it will save you.
+
 import pygame
+pygame.font.init()
 import neat
 import time
 import os
@@ -20,17 +28,18 @@ WIN_WIDTH = 550
 WIN_HEIGHT = 800
 
 ## importing game graphics to be used
-BIRD_IMGS = [pygame.transform.scale2x(pygame.image.load(os.path.join("bird1.png"))),pygame.transform.scale2x(pygame.image.load(os.path.join("bird2.png"))),
-            pygame.transform.scale2x(pygame.image.load(os.path.join("bird3.png")))]
-PIPE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("pipe.png")))
+SHIP_IMGS = [(pygame.image.load(os.path.join("ship_1.png"))),(pygame.image.load(os.path.join("ship_2.png"))),
+            (pygame.image.load(os.path.join("Ship_3.png")))]
+TREE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("treeLong.png")))
 BASE_IMG = pygame.transform.scale2x(pygame.image.load("base.png"))
-BG_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("bg.png")))
+BG_IMG = pygame.image.load(os.path.join("backgroundColorDesert.png"))
 
+STAT_FONT = pygame.font.SysFont("comicsans", 50)
 
 # Pipe class that represents the obstacles that the object will go by
-class Pipe:
+class Tree:
     GAP = 200
-    VEL = 5
+    VEL = 2
 
     # Initialize the Pipe object
     def __init__(self,x):
@@ -38,35 +47,35 @@ class Pipe:
         self.height = 0
         self.top = 0
         self.bottom = 0
-        self.PIPE_TOP = pygame.transform.flip(PIPE_IMG, False, True)
-        self.PIPE_BOTTOM = PIPE_IMG
+        self.TREE_TOP = pygame.transform.flip(TREE_IMG, False, True)
+        self.TREE_BOTTOM = TREE_IMG
         self.passed = False
         self.set_height()
 
     # Sets height of Pipe at random
     def set_height(self):
-        self.height = random.randrange(20 , 420)
-        self.top = self.height - self.PIPE_TOP.get_height()
+        self.height = random.randrange(40 , 420)
+        self.top = self.height - self.TREE_TOP.get_height()
         self.bottom = self.height + self.GAP
 
     def move(self):
         self.x -= self.VEL
 
     def draw(self,win):
-        win.blit(self.PIPE_TOP,(self.x, self.top))
-        win.blit(self.PIPE_BOTTOM,(self.x, self.bottom))
+        win.blit(self.TREE_TOP,(self.x, self.top))
+        win.blit(self.TREE_BOTTOM,(self.x, self.bottom))
 
     # Collision method that checks if two images ( masks ) collide
-    def collide(self,bird):
-        bird_mask = bird.get_mask()
-        top_mask = pygame.mask.from_surface(self.PIPE_TOP)
-        bottom_mask = pygame.mask.from_surface(self.PIPE_BOTTOM)
+    def collide(self,ship):
+        ship_mask = ship.get_mask()
+        top_mask = pygame.mask.from_surface(self.TREE_TOP)
+        bottom_mask = pygame.mask.from_surface(self.TREE_BOTTOM)
         
-        top_offset = (self.x - bird.x, self.top - round(bird.y))
-        bottom_offset = (self.x - bird.x, self.bottom - round(bird.y))
+        top_offset = (self.x - ship.x, self.top - round(ship.y))
+        bottom_offset = (self.x - ship.x, self.bottom - round(ship.y))
 
-        b_point = bird_mask.overlap(bottom_mask, bottom_offset)
-        t_point = bird_mask.overlap(top_mask, top_offset)
+        b_point = ship_mask.overlap(bottom_mask, bottom_offset)
+        t_point = ship_mask.overlap(top_mask, top_offset)
 
         if t_point or b_point:
             return True
@@ -74,7 +83,7 @@ class Pipe:
 
 # class that represents the base of the game and how it will move
 class Base:
-    VEL = 5
+    VEL = 2
     WIDTH = BASE_IMG.get_width()
     IMG = BASE_IMG
 
@@ -98,14 +107,14 @@ class Base:
         win.blit(self.IMG, (self.x2, self.y))
 
 
-# bird class for the bird object
-class Bird:
-    IMGS = BIRD_IMGS
+# Ship class for the ship object
+class Ship:
+    IMGS = SHIP_IMGS
     MAX_ROTATION = 25
     ROT_VEL = 20
     ANIMATION_TIME = 5
     
-    # Initialize the game object ( bird )
+    # Initialize the game object ( ship )
     def __init__(self,x,y):
         self.x = x
         self.y = y
@@ -125,6 +134,7 @@ class Bird:
     # Move method that defines how the object will move
     def move(self):
         self.tick_count += 1
+
         # movement logic of the game objectc
         d = self.vel*self.tick_count + 1.5*self.tick_count**2
 
@@ -174,19 +184,24 @@ class Bird:
     def get_mask(self):
         return pygame.mask.from_surface(self.img)
 
-def draw_window(win,bird,pipes,base):
+def draw_window(win,ship,trees,base,score):
     win.blit(BG_IMG, (0,0))
-    for pipe in pipes:
-        pipe.draw(win)
+    for tree in trees:
+        tree.draw(win)
+
+    text = STAT_FONT.render("Score: " + str(score), 1,(0,0,0))
+    win.blit(text, (WIN_WIDTH- 10 - text.get_width(), 10))
+
+
     base.draw(win)
 
-    bird.draw(win)
+    ship.draw(win)
     pygame.display.update()
 
 def main():
-    bird = Bird(250,350)
+    ship = Ship(-90,50)
     base = Base(740)
-    pipes = [Pipe(700)]
+    trees = [Tree(700)]
     score = 0
 
     win = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT))
@@ -197,27 +212,31 @@ def main():
             if event.type == pygame.QUIT:
                 run = False
 
-        add_pipe = False
+        add_tree = False
         rem  = []
-        for pipe in pipes:
-            if pipe.collide(bird):
+        for tree in trees:
+            if tree.collide(ship):
                 pass
-            if pipe.x + pipe.PIPE_TOP.get_width() < 0:
-                rem.append(pipe)
-            if not pipe.passed and pipe.x < bird.x:
-                pipe.passed = True
-                add_pipe = True
+            if tree.x + tree.TREE_TOP.get_width() < 0:
+                rem.append(tree)
+            if not tree.passed and tree.x < tree.x:
+                tree.passed = True
+                add_tree = True
 
-            pipe.move()
+            tree.move()
 
-        if add_pipe:
+        if add_tree:
             score += 1
-            pipes.append(Pipe(800))
+            trees.append(Tree(800))
         for r in rem:
-            pipes.remove(r)
+            trees.remove(r)
+
+
+        if ship.y + ship.img.get_height() >= 730:
+            pass
 
         base.move()
-        draw_window(win,bird,pipes,base)
+        draw_window(win,ship,trees,base,score)
     pygame.quit()
     quit()
 
