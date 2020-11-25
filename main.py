@@ -1,7 +1,7 @@
 # Luis Combariza  - November 2 / 2020
 # Calgary, AB
 # luis_combariza@outlook.com
-# luis Combariza @ linkedIn.com
+# luisCombariza@linkedIn.com
 
 ######################################################################
 ###################### AI LEARNS TO GAME #############################
@@ -27,6 +27,8 @@ import random
 WIN_WIDTH = 550
 WIN_HEIGHT = 800
 
+WIN = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
+
 ## importing game graphics to be used
 SHIP_IMGS = [(pygame.image.load(os.path.join("ship_1.png"))),(pygame.image.load(os.path.join("ship_2.png"))),
             (pygame.image.load(os.path.join("Ship_3.png")))]
@@ -36,25 +38,28 @@ BG_IMG = pygame.image.load(os.path.join("backgroundColorDesert.png"))
 
 STAT_FONT = pygame.font.SysFont("comicsans", 50)
 
-# Pipe class that represents the obstacles that the object will go by
-class Tree:
+# Tree class that represents the obstacles that the object will go by
+class Tree():
     GAP = 200
-    VEL = 2
+    VEL = 5
 
-    # Initialize the Pipe object
+    # Initialize the Tree object obstacles for the ship to pass by
     def __init__(self,x):
         self.x = x
         self.height = 0
+
         self.top = 0
         self.bottom = 0
+
         self.TREE_TOP = pygame.transform.flip(TREE_IMG, False, True)
         self.TREE_BOTTOM = TREE_IMG
+
         self.passed = False
         self.set_height()
 
     # Sets height of Pipe at random
     def set_height(self):
-        self.height = random.randrange(40 , 420)
+        self.height = random.randrange(50 , 450)
         self.top = self.height - self.TREE_TOP.get_height()
         self.bottom = self.height + self.GAP
 
@@ -79,10 +84,11 @@ class Tree:
 
         if t_point or b_point:
             return True
+
         return False
 
 # class that represents the base of the game and how it will move
-class Base:
+class Base():
     VEL = 2
     WIDTH = BASE_IMG.get_width()
     IMG = BASE_IMG
@@ -135,7 +141,7 @@ class Ship:
     def move(self):
         self.tick_count += 1
 
-        # movement logic of the game objectc
+        # movement logic of the game object
         d = self.vel*self.tick_count + 1.5*self.tick_count**2
 
         if d >= 16:
@@ -186,57 +192,57 @@ class Ship:
 
 def draw_window(win,ship,trees,base,score):
     win.blit(BG_IMG, (0,0))
+
     for tree in trees:
         tree.draw(win)
 
-    text = STAT_FONT.render("Score: " + str(score), 1,(0,0,0))
-    win.blit(text, (WIN_WIDTH- 10 - text.get_width(), 10))
-
-
+    text = STAT_FONT.render("Score: "+ str(score), 1, (0,0,0))
+    win.blit(text, (WIN_WIDTH - 10 - text.get_width(),10))
     base.draw(win)
 
     ship.draw(win)
-    pygame.display.update()
+    pygame.display.update() 
 
 def main():
     ship = Ship(-90,50)
-    base = Base(740)
-    trees = [Tree(700)]
+    base = Base(730)
+    trees = [Tree(500)]
     score = 0
-
-    win = pygame.display.set_mode((WIN_WIDTH,WIN_HEIGHT))
+    win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
+    clock = pygame.time.Clock()
 
     run = True
     while run:
+        clock.tick(50)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
 
+        rem = []
         add_tree = False
-        rem  = []
         for tree in trees:
             if tree.collide(ship):
                 pass
             if tree.x + tree.TREE_TOP.get_width() < 0:
                 rem.append(tree)
-            if not tree.passed and tree.x < tree.x:
+
+            if not tree.passed and tree.x < ship.x:
                 tree.passed = True
                 add_tree = True
-
             tree.move()
 
         if add_tree:
             score += 1
-            trees.append(Tree(800))
+            trees.append(Tree(500))
         for r in rem:
             trees.remove(r)
 
-
-        if ship.y + ship.img.get_height() >= 730:
+        if ship.y + ship.img.get_height() >=730:
             pass
 
         base.move()
         draw_window(win,ship,trees,base,score)
+
     pygame.quit()
     quit()
 
