@@ -201,10 +201,22 @@ def draw_window(win,ship,trees,base,score):
     base.draw(win)
 
     ship.draw(win)
-    pygame.display.update() 
+    pygame.display.update()
 
-def main():
-    ship = Ship(-90,50)
+def main(genomes,config):
+
+    nets = []
+    ge = []
+    ships = []
+
+    for g in genomes:
+        net = neat.nn.FeedForwardNetwork(g, config)
+        nets.append(net)
+        ships.append(Ship(100,340))
+        g.fitness = 0
+        ge.append(g)
+
+
     base = Base(730)
     trees = [Tree(500)]
     score = 0
@@ -221,14 +233,17 @@ def main():
         rem = []
         add_tree = False
         for tree in trees:
-            if tree.collide(ship):
-                pass
+            for ship in ships:
+                if tree.collide(ship):
+                    pass
+
+                if not tree.passed and tree.x < ship.x:
+                    tree.passed = True
+                    add_tree = True
+
             if tree.x + tree.TREE_TOP.get_width() < 0:
                 rem.append(tree)
 
-            if not tree.passed and tree.x < ship.x:
-                tree.passed = True
-                add_tree = True
             tree.move()
 
         if add_tree:
@@ -237,8 +252,9 @@ def main():
         for r in rem:
             trees.remove(r)
 
-        if ship.y + ship.img.get_height() >=730:
-            pass
+        for ship in ships:
+            if ship.y + ship.img.get_height() >=730:
+                pass
 
         base.move()
         draw_window(win,ship,trees,base,score)
@@ -246,7 +262,25 @@ def main():
     pygame.quit()
     quit()
 
-
 main()
 
+def run(config_path):
+    config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                                neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                                config_path)
 
+    p = neat.Population(config)
+
+    p.add_reporter(neat.StdOutReporter(True))
+    stat = neat.StatisticsReporter()
+    p.add_reporter(stat)
+
+    winner = p.run(main,50)
+
+
+
+
+if __name__== "__main__":
+    local_dir = os.path.dirname(__file__)
+    config_path = os.path.join(local_dir,"config-feedforward.txt")
+    run(config_path)
