@@ -30,17 +30,17 @@ WIN_HEIGHT = 800
 WIN = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
 
 ## importing game graphics to be used
-SHIP_IMGS = [(pygame.image.load(os.path.join("ship_1.png"))),(pygame.image.load(os.path.join("ship_2.png"))),
-            (pygame.image.load(os.path.join("Ship_3.png")))]
-TREE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("treeLong.png")))
+SHIP_IMGS = [(pygame.image.load(os.path.join("ship_A.png"))),(pygame.image.load(os.path.join("ship_A.png"))),
+            (pygame.image.load(os.path.join("ship_A.png")))]
+TREE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("pine.png")))
 BASE_IMG = pygame.transform.scale2x(pygame.image.load("base.png"))
-BG_IMG = pygame.image.load(os.path.join("backgroundColorDesert.png"))
+BG_IMG = pygame.image.load(os.path.join("backgroundColorForest.png"))
 
 STAT_FONT = pygame.font.SysFont("comicsans", 50)
 
 # Tree class that represents the obstacles that the object will go by
 class Tree():
-    GAP = 200
+    GAP = 150
     VEL = 5
 
     # Initialize the Tree object obstacles for the ship to pass by
@@ -59,7 +59,7 @@ class Tree():
 
     # Sets height of Pipe at random
     def set_height(self):
-        self.height = random.randrange(50 , 450)
+        self.height = random.randrange(200 , 400)
         self.top = self.height - self.TREE_TOP.get_height()
         self.bottom = self.height + self.GAP
 
@@ -133,7 +133,7 @@ class Ship:
 
     # Jump method that defines how the object jumps
     def jump(self):
-        self.val = -10.5
+        self.vel = -10.5
         self.tick_count = 0
         self.height = self.y
 
@@ -190,7 +190,7 @@ class Ship:
     def get_mask(self):
         return pygame.mask.from_surface(self.img)
 
-def draw_window(win,ship,trees,base,score):
+def draw_window(win,ships,trees,base,score):
     win.blit(BG_IMG, (0,0))
 
     for tree in trees:
@@ -200,7 +200,9 @@ def draw_window(win,ship,trees,base,score):
     win.blit(text, (WIN_WIDTH - 10 - text.get_width(),10))
     base.draw(win)
 
-    ship.draw(win)
+    for ship in ships:
+        ship.draw(win)
+
     pygame.display.update()
 
 def main(genomes,config):
@@ -209,13 +211,12 @@ def main(genomes,config):
     ge = []
     ships = []
 
-    for g in genomes:
-        net = neat.nn.FeedForwardNetwork(g, config)
+    for _,g in genomes:
+        net = neat.nn.FeedForwardNetwork.create(g, config)
         nets.append(net)
-        ships.append(Ship(100,340))
+        ships.append(Ship(50,350))
         g.fitness = 0
         ge.append(g)
-
 
     base = Base(730)
     trees = [Tree(500)]
@@ -225,17 +226,40 @@ def main(genomes,config):
 
     run = True
     while run:
-        clock.tick(50)
+        clock.tick(30)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
+                pygame.quit()
+                quit()
+
+        tree_ind = 0
+        if len(ships)>0:
+            if len(trees) > 1 and ships[0].x > trees[0].x + trees[0].TREE_TOP.get_width():
+                tree_ind = 1
+        else:
+            run = False
+            break
+
+        for x, ship in enumerate(ships):
+            ship.move()
+            ge[x].fitness += 0.1
+
+            output = nets[ships.index(ship)].activate(
+                (ship.y, abs(ship.y - trees[tree_ind].height), abs(ship.y - trees[tree_ind].bottom)))
+
+            if output[0] > 0.5:
+                ship.jump()
 
         rem = []
         add_tree = False
         for tree in trees:
-            for ship in ships:
+            for x,ship in enumerate(ships):
                 if tree.collide(ship):
-                    pass
+                    ge[x].fitness -= 1
+                    ships.pop(x)
+                    nets.pop(x)
+                    ge.pop(x)
 
                 if not tree.passed and tree.x < ship.x:
                     tree.passed = True
@@ -248,21 +272,23 @@ def main(genomes,config):
 
         if add_tree:
             score += 1
+            for g in ge:
+                g.fitness += 5
             trees.append(Tree(500))
         for r in rem:
             trees.remove(r)
 
-        for ship in ships:
-            if ship.y + ship.img.get_height() >=730:
-                pass
+        for x,ship in enumerate(ships):
+            if ship.y + ship.img.get_height() >=730 or ship.y < 0:
+                ships.pop(x)
+                nets.pop(x)
+                ge.pop(x)
+
 
         base.move()
-        draw_window(win,ship,trees,base,score)
+        draw_window(win,ships,trees,base,score)
 
-    pygame.quit()
-    quit()
 
-main()
 
 def run(config_path):
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
@@ -276,7 +302,6 @@ def run(config_path):
     p.add_reporter(stat)
 
     winner = p.run(main,50)
-
 
 
 
