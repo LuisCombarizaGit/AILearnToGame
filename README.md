@@ -1,2 +1,2 @@
 # AILearnsToGame
-Creating an AI capable of defeating a game I was not able to
+Utilizing the NEAT neuro network library to teach a python script how to play a game. Download file and run the python , look at the console file the game is running to see the different information regarding the learning of each child in each generation.
