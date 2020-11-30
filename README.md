@@ -3,4 +3,4 @@ Utilizing the NEAT neuro network library to teach a python script how to play a 
 
 If you would like to alter the neuro network , make changes to first few values in the config-feedforward.txt file.
 
-![](./Aigaming.jpg)
+![](./AIgaming.jpg)
