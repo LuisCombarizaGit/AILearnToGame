@@ -32,15 +32,17 @@ WIN = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
 ## importing game graphics to be used
 SHIP_IMGS = [(pygame.image.load(os.path.join("ship_A.png"))),(pygame.image.load(os.path.join("ship_A.png"))),
             (pygame.image.load(os.path.join("ship_A.png")))]
-TREE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("pine.png")))
+TREE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("pipe.png")))
 BASE_IMG = pygame.transform.scale2x(pygame.image.load("base.png"))
 BG_IMG = pygame.image.load(os.path.join("backgroundColorForest.png"))
 
 STAT_FONT = pygame.font.SysFont("comicsans", 50)
+STAT_FONT_TWO = pygame.font.SysFont("comicsans", 20)
+
 
 # Tree class that represents the obstacles that the object will go by
 class Tree():
-    GAP = 150
+    GAP = 100
     VEL = 5
 
     # Initialize the Tree object obstacles for the ship to pass by
@@ -59,7 +61,7 @@ class Tree():
 
     # Sets height of Pipe at random
     def set_height(self):
-        self.height = random.randrange(200 , 400)
+        self.height = random.randrange(200 , 600)
         self.top = self.height - self.TREE_TOP.get_height()
         self.bottom = self.height + self.GAP
 
@@ -133,7 +135,7 @@ class Ship:
 
     # Jump method that defines how the object jumps
     def jump(self):
-        self.vel = -10.5
+        self.vel = -5.5
         self.tick_count = 0
         self.height = self.y
 
@@ -190,20 +192,6 @@ class Ship:
     def get_mask(self):
         return pygame.mask.from_surface(self.img)
 
-def draw_window(win,ships,trees,base,score):
-    win.blit(BG_IMG, (0,0))
-
-    for tree in trees:
-        tree.draw(win)
-
-    text = STAT_FONT.render("Score: "+ str(score), 1, (0,0,0))
-    win.blit(text, (WIN_WIDTH - 10 - text.get_width(),10))
-    base.draw(win)
-
-    for ship in ships:
-        ship.draw(win)
-
-    pygame.display.update()
 
 def main(genomes,config):
 
@@ -221,6 +209,7 @@ def main(genomes,config):
     base = Base(730)
     trees = [Tree(500)]
     score = 0
+    gen = len(ge)
     win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
     clock = pygame.time.Clock()
 
@@ -286,6 +275,7 @@ def main(genomes,config):
 
 
         base.move()
+
         draw_window(win,ships,trees,base,score)
 
 
@@ -299,9 +289,28 @@ def run(config_path):
 
     p.add_reporter(neat.StdOutReporter(True))
     stat = neat.StatisticsReporter()
+    winner = p.run(main,50)
+
     p.add_reporter(stat)
 
-    winner = p.run(main,50)
+
+def draw_window(win,ships,trees,base,score):
+    win.blit(BG_IMG, (0,0))
+
+    for tree in trees:
+        tree.draw(win)
+
+    text = STAT_FONT.render("Score: "+ str(score), 1, (0,0,0))
+    win.blit(text, (WIN_WIDTH - 10 - text.get_width(),10))
+    # text = STAT_FONT_TWO.render("Score: " + str(run(config_path)), 1, (0, 0, 0))
+    # win.blit(text, (WIN_WIDTH - 140 - text.get_width(), 10))
+    base.draw(win)
+
+    for ship in ships:
+        ship.draw(win)
+
+    pygame.display.update()
+
 
 
 
